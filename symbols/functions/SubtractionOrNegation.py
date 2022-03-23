@@ -5,7 +5,7 @@ class SubtractionOrNegation(Function):
 
     @staticmethod
     def symbol() -> str:
-        return "+"
+        return "-"
 
     @staticmethod
     def compute(variables: list):
