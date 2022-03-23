@@ -7,8 +7,9 @@ class AdjacencyMatrix:
             self.__matrix.append([0] * number_of_nodes)
 
     def connect(self, x, y):
-        self.__matrix[x][y] = 1
-        self.__matrix[y][x] = 1
+        if x != y:
+            self.__matrix[x][y] = 1
+            self.__matrix[y][x] = 1
 
     def print(self):
         for i in range(self.__number_of_nodes):

@@ -11,5 +11,6 @@ class Modulus(Function):
     def compute(variables: list):
         result = variables[0]
         for i in range(1, len(variables)):
-            result %= variables[i]
+            if variables[i] != 0:
+                result %= variables[i]
         return result

@@ -84,9 +84,6 @@ class FvidGenerator:
 
         while not_exit:
 
-            if str(last_fvid[0]) == "(" and str(last_fvid[1]) in variables_strs and str(last_fvid[2]) in functions_strs and str(last_fvid[3]) == ")":
-                a = 0
-
             if FvidGenerator.__check_fvid(last_fvid):
                 fvids.append(last_fvid)
 
