@@ -20,5 +20,5 @@ class Command(ABC):
 
     @staticmethod
     @abstractmethod
-    def execute(arguments):
+    def execute(arguments_dict):
         pass

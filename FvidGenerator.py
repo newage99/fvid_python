@@ -97,11 +97,34 @@ class FvidGenerator:
         return True
 
     @staticmethod
-    def generate(length):
+    def __fvid_str_to_symbols_list(fvid_str: str):
 
-        first_fvid = []
-        for i in range(length):
-            first_fvid.append(symbols[0])
+        fvid_str_split = fvid_str.split(" ")
+        symbols_list = []
+
+        for symbol_str in fvid_str_split:
+            symbol = Symbol.get_symbol_by_str(symbol_str)
+            if symbol:
+                symbols_list.append(symbol)
+            else:
+                return None
+
+        return symbols_list
+
+    @staticmethod
+    def generate(length, start_fvid=None):
+
+        if start_fvid:
+            first_fvid = FvidGenerator.__fvid_str_to_symbols_list(start_fvid)
+            if not first_fvid:
+                print(f"Error converting 'start_fvid'={start_fvid} to symbols list.")
+        else:
+            first_fvid = None
+
+        if not first_fvid:
+            first_fvid = []
+            for i in range(length):
+                first_fvid.append(symbols[0])
         fvids = []
         not_exit = True
         last_fvid = first_fvid

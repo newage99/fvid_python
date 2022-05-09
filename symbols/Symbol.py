@@ -34,5 +34,13 @@ class Symbol:
             return list(Symbol.symbols_dict().keys())
         return Symbol.__symbols_strs
 
+    @staticmethod
+    def get_symbol_by_str(value: str):
+        symbols = Symbol.symbols()
+        for symbol in symbols:
+            if symbol.symbol() == value:
+                return symbol
+        return None
+
     def __str__(self):
         return self.symbol()
