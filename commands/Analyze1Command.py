@@ -1,4 +1,5 @@
 import sys
+import time
 from commands.Command import Command
 from symbols.Symbol import Symbol
 from symbols.Variable import Variable
@@ -65,33 +66,48 @@ class Analyze1Command(Command):
 
     @staticmethod
     def execute(arguments):
-        length = 3
+        length = 7
         print("")
         print(f"FVid length: {length}")
         fvids = FvidGenerator.generate(length)
-        number_of_nodes_list = [5, 10]
+        number_of_nodes_list = [10]
         for number_of_nodes in number_of_nodes_list:
             print("")
             print(f"Testing for {number_of_nodes} nodes...")
             results = []
-            for fvid in fvids:
+            percentage = 0
+            len_fvids = len(fvids)
+            for i in range(len(fvids)):
+                fvid = fvids[i]
+                current_percentage = int((i / len_fvids) * 100)
+                if current_percentage > percentage:
+                    print(f"{current_percentage}%")
+                    percentage = current_percentage
                 fvid_str = " ".join([str(s) for s in fvid])
                 adjacency_matrix = Analyze1Command.__generate_adjacency_matrix(fvid, number_of_nodes)
                 scores = DegreeDiameterCalculator.calculate(adjacency_matrix.get_matrix())
                 if scores:
+                    simple_score = scores[0] + scores[1]
                     total_score = scores[2] + scores[3]
                     inserted = False
                     for i in range(len(results)):
                         result = results[i]
-                        if result[1] > total_score:
+                        list_simple = result[2] + result[3]
+                        list_total = result[4] + result[5]
+                        if simple_score < list_simple  or (simple_score == list_simple and total_score < list_total):
                             results.insert(i, [fvid_str, total_score, scores[0], scores[1], scores[2], scores[3]])
                             inserted = True
                             break
                     if not inserted:
                         results.append([fvid_str, total_score, scores[0], scores[1], scores[2], scores[3]])
+                time.sleep(0.001)
             print(f"Connected fvids: {len(results)}")
             print("")
-            for result in results:
+            len_results = len(results)
+            for i in range(20):
+                if i - 1 > len_results:
+                    break
+                result = results[i]
                 result = [str(r) for r in result]
                 print(' | '.join(result))
 

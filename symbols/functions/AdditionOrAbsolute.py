@@ -4,6 +4,10 @@ from symbols.Function import Function
 class AdditionOrAbsolute(Function):
 
     @staticmethod
+    def does_parameters_order_affects_result() -> bool:
+        return False
+
+    @staticmethod
     def symbol() -> str:
         return "+"
 

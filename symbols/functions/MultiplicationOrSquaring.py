@@ -1,22 +1,21 @@
 from symbols.Function import Function
 
 
-class SubtractionOrNegation(Function):
+class MultiplicationOrSquaring(Function):
 
     @staticmethod
     def does_parameters_order_affects_result() -> bool:
-        return True
+        return False
 
     @staticmethod
     def symbol() -> str:
-        return "-"
+        return "*"
 
     @staticmethod
     def compute(variables: list):
         if len(variables) > 1:
-            result = 0
-            for var in variables:
-                result -= var
+            result = variables[0]
+            for i in range(1, len(variables)):
+                result *= variables[i]
             return result
-        else:
-            return -variables[0]
+        return variables[0] * variables[0]

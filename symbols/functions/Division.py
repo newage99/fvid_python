@@ -1,7 +1,7 @@
 from symbols.Function import Function
 
 
-class Modulus(Function):
+class Division(Function):
 
     @staticmethod
     def does_parameters_order_affects_result() -> bool:
@@ -9,12 +9,12 @@ class Modulus(Function):
 
     @staticmethod
     def symbol() -> str:
-        return "%"
+        return "/"
 
     @staticmethod
     def compute(variables: list):
         result = variables[0]
         for i in range(1, len(variables)):
             if variables[i] != 0:
-                result %= variables[i]
+                result //= variables[i]
         return result

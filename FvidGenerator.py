@@ -40,14 +40,38 @@ class FvidGenerator:
         currently_open_parenthesis = 0
         last_open_parenthesis_pos = -1
         last_symbol_type = None
+        last_fvid_str = ''
         first_symbol_str = str(fvid[0])
+        current_variables = []
+        are_current_variables_ordered = True
 
         if first_symbol_str == ')' or first_symbol_str in functions_strs:
             return False
 
+        fvid_str = ''
+        for f in fvid:
+            fvid_str += str(f) + ' '
+
+        if fvid_str == '2 1 + ':
+            a = 0
+
         for i in range(len(fvid)):
 
-            current_symbol_type = FvidGenerator.__get_symbol_type(str(fvid[i]))
+            current_fvid = fvid[i]
+            current_fvid_str = str(current_fvid)
+            current_symbol_type = FvidGenerator.__get_symbol_type(current_fvid_str)
+
+            if current_symbol_type == 'v':
+                current_variables.append(current_fvid_str)
+                if len(current_variables) > 1 and (len(current_fvid_str) < len(last_fvid_str) or
+                        (len(current_fvid_str) == len(last_fvid_str) and current_fvid_str < last_fvid_str)):
+                    are_current_variables_ordered = False
+            elif len(current_variables) > 0:
+                fun = getattr(current_fvid, 'does_parameters_order_affects_result', None)
+                if fun and not fun() and not are_current_variables_ordered:
+                    return False
+                current_variables.clear()
+                are_current_variables_ordered = True
 
             if current_symbol_type == ')' and \
                     (last_symbol_type == 'v' or (last_open_parenthesis_pos > -1 and last_open_parenthesis_pos > i - 3)):
@@ -65,6 +89,7 @@ class FvidGenerator:
                     return False
 
             last_symbol_type = current_symbol_type
+            last_fvid_str = current_fvid_str
 
         if currently_open_parenthesis != 0 or last_symbol_type != 'f':
             return False

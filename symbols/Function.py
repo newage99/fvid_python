@@ -17,6 +17,11 @@ class Function(Symbol, abc.ABC):
         pass
 
     @staticmethod
+    @abc.abstractmethod
+    def does_parameters_order_affects_result() -> bool:
+        pass
+
+    @staticmethod
     def symbols_dict():
         if not Function.__symbols_dict:
             Function.__symbols_dict = get_symbol_classes_that_inherit_from("Function", "symbol")
