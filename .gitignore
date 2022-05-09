@@ -3,3 +3,5 @@ venv
 results
 __pycache__
 .DS_Store
+backend/static
+backend/env
