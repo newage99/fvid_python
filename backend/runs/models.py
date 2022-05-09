@@ -28,5 +28,5 @@ class AnalyzeRun(models.Model):
         }
         if self.next_fvid_to_analyze:
             arguments_dict["start_fvid"] = self.next_fvid_to_analyze
-        from commands.Analyze1Command import Analyze1Command
+        from runs.commands.Analyze1Command import Analyze1Command
         Analyze1Command.execute(arguments_dict)
