@@ -12,6 +12,10 @@ class DegreeDiameterResult(models.Model):
 
     diameter = models.PositiveIntegerField(null=True, blank=True)
 
+    simple_score = models.PositiveIntegerField(null=True, blank=True)
+
     total_degree = models.PositiveIntegerField(null=True, blank=True)
 
-    total_diameter = models.PositiveIntegerField(null=True, blank=True)
+    total_diameter = models.FloatField(null=True, blank=True)
+
+    total_score = models.FloatField(null=True, blank=True)

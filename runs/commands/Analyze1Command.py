@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import datetime
 
 from adjacency_matrix.AdjacencyMatrix import AdjacencyMatrixClass
 from adjacency_matrix.models import AdjacencyMatrix
@@ -12,6 +13,7 @@ from results.models import DegreeDiameterResult
 
 from runs.commands.Command import Command
 from runs.DegreeDiameterCalculator import DegreeDiameterCalculator
+from runs.models import AnalyzeRun
 
 from symbols.Symbol import Symbol
 from symbols.Variable import Variable
@@ -80,21 +82,26 @@ class Analyze1Command(Command):
             django_object = uploaded_matrix["django_object"]
             adjacency_matrix = uploaded_matrix["adjacency_matrix"]
             connected = adjacency_matrix["connected"] if "connected" in adjacency_matrix else False
-            degree = diameter = total_degree = total_diameter = None
+            degree = diameter = simple_score = total_degree = total_diameter = total_score = None
 
             if connected and "scores" in adjacency_matrix:
                 scores = adjacency_matrix["scores"]
                 degree = scores["degree"] if "degree" in scores else None
                 diameter = scores["diameter"] if "diameter" in scores else None
+                simple_score = degree + diameter
                 total_degree = scores["total_degree"] if "total_degree" in scores else None
                 total_diameter = scores["total_diameter"] if "total_diameter" in scores else None
+                total_score = total_degree + total_diameter
 
             DegreeDiameterResult.objects.get_or_create(adjacency_matrix=django_object, connected=connected,
-                                                       degree=degree, diameter=diameter, total_degree=total_degree,
-                                                       total_diameter=total_diameter)
+                                                       degree=degree, diameter=diameter, simple_score=simple_score,
+                                                       total_degree=total_degree, total_diameter=total_diameter,
+                                                       total_score=total_score)
 
     @staticmethod
     def upload_fvids(results):
+
+        uploaded_fvids = 0
 
         for key in results:
             element = results[key]
@@ -103,56 +110,57 @@ class Analyze1Command(Command):
                 for fvid in element["fvids"]:
                     fvid, created = FVID.objects.get_or_create(value=fvid)
                     FVIDAdjacencyMatrix.objects.get_or_create(fvid=fvid, adjacency_matrix=adjacency_matrix_obj)
+                    uploaded_fvids += 1
+
+        return uploaded_fvids
 
     @staticmethod
-    def upload_results(results, number_of_nodes):
+    def upload_results(results, number_of_nodes, next_fvid_to_analyze, analyze_run_obj_f):
 
-        # Step 1: Upload 'AdjacencyMatrix' objects
-        uploaded_matrices = AdjacencyMatrixClass.upload_adjacency_matrices(results, number_of_nodes)
+        # Step 1: Upload 'AdjacencyMatrix' and 'AdjacencyMatrixDiscoveredOnRun' objects
+        uploaded_matrices = AdjacencyMatrixClass.upload_adjacency_matrices(results, number_of_nodes, analyze_run_obj_f)
 
         # Step 2: Upload 'DegreeDiameterResult' objects
         Analyze1Command.upload_degree_diameter_results(uploaded_matrices)
 
-        # Step 3: Upload
-        Analyze1Command.upload_fvids(results)
+        analyzed_fvids = analyze_run_obj_f[0].number_of_analyzed_fvids
+
+        # Step 3: Upload 'FVID' and 'FVIDAdjacencyMatrix' objects
+        uploaded_fvids = Analyze1Command.upload_fvids(results)
+
+        analyze_run_obj_f.update(next_fvid_to_analyze=next_fvid_to_analyze,
+                                 number_of_analyzed_fvids=analyzed_fvids + uploaded_fvids)
 
     @staticmethod
     def execute(arguments):
-        if arguments is None or "fvid_length" not in arguments or "number_of_nodes" not in arguments or \
-                "upload_frequency" not in arguments:
-            print("Invalid arguments.")
-            return
+
+        mandatory_arguments = ["fvid_length", "number_of_nodes", "upload_frequency", "number_of_analyzed_fvids",
+                               "run_id"]
+        for mandatory_argument in mandatory_arguments:
+            if mandatory_argument not in arguments:
+                print(f"Missing argument: {mandatory_argument}")
+                return
 
         fvid_length = arguments["fvid_length"]
         number_of_nodes = arguments["number_of_nodes"]
         upload_frequency = arguments["upload_frequency"]
-        start_fvid = arguments["start_fvid"] if "start_fvid" in arguments else None
-        print("")
-        print(f"FVid length: {fvid_length}")
-
-        fvid_generator = FvidGenerator()
-        fvids = fvid_generator.generate(fvid_length, start_fvid)
-
-        print("")
-        print(f"Testing for {number_of_nodes} nodes...")
-        results = []
-        percentage = 0
-        len_fvids = len(fvids)
-
+        # number_of_analyzed_fvids = arguments["number_of_analyzed_fvids"]
+        run_id = arguments["run_id"]
+        fvid_generator = FvidGenerator(length=fvid_length)
+        start_fvid_str = arguments["start_fvid"] if "start_fvid" in arguments else None
+        if start_fvid_str:
+            fvid = fvid_generator.fvid_str_to_symbols_list(start_fvid_str)
+        else:
+            fvid = fvid_generator.get_first_fvid()
         ams = {}
         ams_to_upload = {}
         fvids_to_upload_counter = 0
+        analyze_run_django_obj_f = AnalyzeRun.objects.filter(id=run_id)
 
-        for i in range(len(fvids)):
-            fvid = fvids[i]
-            current_percentage = int((i / len_fvids) * 100)
-            if current_percentage > percentage:
-                print(f"{current_percentage}%")
-                percentage = current_percentage
+        while fvid:
 
             fvid_str = " ".join([str(s) for s in fvid])
             fvids_to_upload_counter += 1
-
             adjacency_matrix = Analyze1Command.__generate_adjacency_matrix(fvid, number_of_nodes)
             connections = adjacency_matrix.get_connections_str()
 
@@ -160,7 +168,7 @@ class Analyze1Command(Command):
                 ams_to_upload[connections]["fvids"].append(fvid_str)
             else:
                 ams_to_upload[connections] = {"fvids": [fvid_str]}
-                ams_to_upload[connections]["matrix_uploaded"] = connections in ams and "matrix_uploaded" in ams and ams[connections]["matrix_uploaded"]
+                ams_to_upload[connections]["matrix_uploaded"] = connections in ams and "matrix_uploaded" in ams[connections] and ams[connections]["matrix_uploaded"]
 
             if connections in ams:
                 is_new_matrix = False
@@ -187,23 +195,14 @@ class Analyze1Command(Command):
                     ams_to_upload[connections]["connected"] = False
 
             if fvids_to_upload_counter >= upload_frequency:
-                Analyze1Command.upload_results(ams_to_upload, number_of_nodes)
+                fvids_to_upload_counter = 0
+                Analyze1Command.upload_results(ams_to_upload, number_of_nodes, fvid_str, analyze_run_django_obj_f)
                 for key in ams_to_upload:
                     ams[key]["matrix_uploaded"] = True
                 ams_to_upload = {}
 
+            fvid = fvid_generator.get_next_fvid(fvid)
             time.sleep(0.0001)
 
-        print(f"Connected fvids: {len(results)}")
-        print("")
-        len_results = len(results)
-        for i in range(20):
-            if i - 1 > len_results:
-                break
-            result = results[i]
-            result = [str(r) for r in result]
-            print(' | '.join(result))
-
-
-if __name__ == '__main__':
-    Analyze1Command.execute(sys.argv[1:])
+        now = datetime.now()
+        analyze_run_django_obj_f.update(percentage=100.0, completed_at=now)

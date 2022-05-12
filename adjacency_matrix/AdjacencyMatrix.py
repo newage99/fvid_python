@@ -6,7 +6,7 @@ class AdjacencyMatrixClass:
     def __init__(self, number_of_nodes):
         self.__number_of_nodes = number_of_nodes
         self.__matrix = []
-        triangular_number = (number_of_nodes * (number_of_nodes - 1)) / 2
+        triangular_number = int((number_of_nodes * (number_of_nodes - 1)) / 2)
         self.__connections = [0 for i in range(triangular_number)]
         for i in range(number_of_nodes):
             self.__matrix.append([0] * number_of_nodes)
@@ -25,6 +25,10 @@ class AdjacencyMatrixClass:
                     if i == small_index and j == big_index:
                         self.__connections[index] = 1
                         break
+                    index += 1
+                else:
+                    continue
+                break
 
     def print(self):
         for i in range(self.__number_of_nodes):
@@ -37,11 +41,12 @@ class AdjacencyMatrixClass:
         return self.__matrix
 
     def get_connections_str(self):
-        return ','.join(self.__connections)
+        return str(self.__connections).replace("[", "").replace("]", "").replace(" ", "")
 
     @staticmethod
-    def upload_adjacency_matrices(adjacency_matrices_dict, number_of_nodes):
+    def upload_adjacency_matrices(adjacency_matrices_dict, number_of_nodes, analyze_run_obj_f):
 
+        from runs.models import AdjacencyMatrixDiscoveredOnRun
         uploaded_matrices = []
 
         for key in adjacency_matrices_dict:
@@ -56,5 +61,7 @@ class AdjacencyMatrixClass:
                         "django_object": obj,
                         "adjacency_matrix": element
                     })
+
+                AdjacencyMatrixDiscoveredOnRun.objects.get_or_create(adjacency_matrix=obj, run=analyze_run_obj_f[0])
 
         return uploaded_matrices

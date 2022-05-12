@@ -5,12 +5,13 @@ from symbols.Function import Function
 
 class FvidGenerator:
 
-    def __init__(self):
+    def __init__(self, length):
         self.symbols = Symbol.symbols()
         self.functions = Function.symbols()
         self.functions_strs = Function.symbols_strs()
         self.variables = Variable.symbols()
         self.variables_strs = Variable.symbols_strs()
+        self.length = length
 
     def __get_next_symbol(self, symbol):
         str_symbol = str(symbol)
@@ -95,7 +96,7 @@ class FvidGenerator:
         return True
 
     @staticmethod
-    def __fvid_str_to_symbols_list(fvid_str: str):
+    def fvid_str_to_symbols_list(fvid_str: str):
 
         fvid_str_split = fvid_str.split(" ")
         symbols_list = []
@@ -109,19 +110,63 @@ class FvidGenerator:
 
         return symbols_list
 
-    def generate(self, length, start_fvid=None):
+    def get_next_fvid(self, fvid):
+
+        fvid_copy = fvid.copy()
+        length = len(fvid_copy)
+        not_modified = False
+
+        while not not_modified:
+
+            not_modified = True
+
+            for i in range(0, length):
+                str_symbol = str(fvid_copy[i])
+                if str_symbol != str(self.symbols[-1]):
+                    next_symbol = self.__get_next_symbol(fvid_copy[i])
+                    fvid_copy[i] = next_symbol
+                    for j in range(i - 1, -1, -1):
+                        fvid_copy[j] = self.symbols[0]
+                    not_modified = False
+                    break
+
+            # for i in range(length - 1, -1, -1):
+            #     str_symbol = str(fvid_copy[i])
+            #     if str_symbol != str(self.symbols[-1]):
+            #         next_symbol = self.__get_next_symbol(fvid_copy[i])
+            #         fvid_copy[i] = next_symbol
+            #         for j in range(i + 1, length):
+            #             fvid_copy[j] = self.symbols[0]
+            #         not_modified = False
+            #         break
+
+            if not not_modified and self.__check_fvid(fvid_copy):
+                return fvid_copy
+
+        return None
+
+    def get_first_fvid(self):
+
+        fvid = []
+        for i in range(self.length):
+            fvid.append(self.symbols[0])
+
+        if self.__check_fvid(fvid):
+            return fvid
+
+        return self.get_next_fvid(fvid)
+
+    def generate(self, start_fvid=None):
 
         if start_fvid:
-            first_fvid = self.__fvid_str_to_symbols_list(start_fvid)
+            first_fvid = self.fvid_str_to_symbols_list(start_fvid)
             if not first_fvid:
                 print(f"Error converting 'start_fvid'={start_fvid} to symbols list.")
         else:
             first_fvid = None
 
         if not first_fvid:
-            first_fvid = []
-            for i in range(length):
-                first_fvid.append(self.symbols[0])
+            first_fvid = self.get_first_fvid()
         fvids = []
         not_exit = True
         last_fvid = first_fvid
@@ -135,12 +180,12 @@ class FvidGenerator:
             fvid = last_fvid.copy()
             not_modified = True
 
-            for i in range(length - 1, -1, -1):
+            for i in range(self.length - 1, -1, -1):
                 str_symbol = str(fvid[i])
                 if str_symbol != str(self.symbols[-1]):
                     next_symbol = self.__get_next_symbol(fvid[i])
                     fvid[i] = next_symbol
-                    for j in range(i + 1, length):
+                    for j in range(i + 1, self.length):
                         fvid[j] = self.symbols[0]
                     not_modified = False
                     break
