@@ -52,3 +52,23 @@ class DegreeDiameterCalculator:
             degree = number_of_neighbours[-1]
 
         return [degree, diameter, total_degree, total_diameter]
+
+
+if __name__ == "__main__":
+
+    #    1  2  3  4  5  6  7  8  9  10
+    matrix = [
+        [0, 1, 0, 0, 0, 1, 0, 1, 0, 0],
+        [1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0, 1, 0, 1, 0, 0],
+        [0, 1, 1, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+        [1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 1, 0],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 1],
+        [0, 1, 0, 0, 1, 0, 0, 0, 1, 0]
+    ]
+
+    scores = DegreeDiameterCalculator.calculate(matrix)
+    print(scores)
