@@ -204,5 +204,9 @@ class Analyze1Command(Command):
             fvid = fvid_generator.get_next_fvid(fvid)
             time.sleep(0.0001)
 
+        Analyze1Command.upload_results(ams_to_upload, number_of_nodes, fvid_str, analyze_run_django_obj_f)
+        for key in ams_to_upload:
+            ams[key]["matrix_uploaded"] = True
+
         now = datetime.now()
         analyze_run_django_obj_f.update(percentage=100.0, completed_at=now)
