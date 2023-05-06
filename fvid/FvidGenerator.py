@@ -51,8 +51,8 @@ class FvidGenerator:
         for f in fvid:
             fvid_str += str(f) + ' '
 
-        if fvid_str == '2 1 + ':
-            a = 0
+        if '+ + +' in fvid_str or '- - -' in fvid_str:
+            return False
 
         for i in range(len(fvid)):
 
@@ -115,34 +115,22 @@ class FvidGenerator:
         fvid_copy = fvid.copy()
         length = len(fvid_copy)
         not_modified = False
+        last_symbol_str = str(self.symbols[-1])
+        first_symbol = self.symbols[0]
 
         while not not_modified:
-
             not_modified = True
-
             for i in range(0, length):
                 str_symbol = str(fvid_copy[i])
-                if str_symbol != str(self.symbols[-1]):
+                if str_symbol != last_symbol_str:
                     next_symbol = self.__get_next_symbol(fvid_copy[i])
                     fvid_copy[i] = next_symbol
                     for j in range(i - 1, -1, -1):
-                        fvid_copy[j] = self.symbols[0]
+                        fvid_copy[j] = first_symbol
+                    if self.__check_fvid(fvid_copy):
+                        return fvid_copy
                     not_modified = False
                     break
-
-            # for i in range(length - 1, -1, -1):
-            #     str_symbol = str(fvid_copy[i])
-            #     if str_symbol != str(self.symbols[-1]):
-            #         next_symbol = self.__get_next_symbol(fvid_copy[i])
-            #         fvid_copy[i] = next_symbol
-            #         for j in range(i + 1, length):
-            #             fvid_copy[j] = self.symbols[0]
-            #         not_modified = False
-            #         break
-
-            if not not_modified and self.__check_fvid(fvid_copy):
-                return fvid_copy
-
         return None
 
     def get_first_fvid(self):

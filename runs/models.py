@@ -15,6 +15,8 @@ class AnalyzeRun(models.Model):
 
     number_of_analyzed_fvids = models.PositiveIntegerField(null=False, blank=False, default=0)
 
+    number_of_analyzed_matrices = models.PositiveIntegerField(null=False, blank=False, default=0)
+
     next_fvid_to_analyze = models.TextField(null=True, blank=True)
 
     percentage = models.FloatField(null=False, blank=False, default=0.0)

@@ -21,13 +21,11 @@ class AdjacencyMatrixClass:
             index = 0
 
             for i in range(self.__number_of_nodes - 1):
-                for j in range(i + 1, self.__number_of_nodes):
-                    if i == small_index and j == big_index:
-                        self.__connections[index] = 1
-                        break
-                    index += 1
-                else:
+                j = i + 1
+                if i != small_index:
+                    index += self.__number_of_nodes - j
                     continue
+                self.__connections[index + big_index - j] = 1
                 break
 
     def print(self):
@@ -61,6 +59,10 @@ class AdjacencyMatrixClass:
                         "django_object": obj,
                         "adjacency_matrix": element
                     })
+                if "fvids" in element and element["fvids"] and len(element["fvids"]) > 0:
+                    prefix = obj.fvids + ", " if obj.fvids else ''
+                    obj.fvids = prefix +  ", ".join(element["fvids"])
+                    obj.save()
 
                 AdjacencyMatrixDiscoveredOnRun.objects.get_or_create(adjacency_matrix=obj, run=analyze_run_obj_f[0])
 

@@ -7,6 +7,8 @@ class AdjacencyMatrix(models.Model):
 
     number_of_nodes = models.PositiveIntegerField(null=False, blank=False)
 
+    fvids = models.TextField(null=True, blank=True)
+
 
 class FVIDAdjacencyMatrix(models.Model):
 
