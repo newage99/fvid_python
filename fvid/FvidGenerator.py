@@ -43,18 +43,16 @@ class FvidGenerator:
         are_current_variables_ordered = True
 
         if first_symbol_str == ')' or first_symbol_str in self.functions_strs:
-            return False
+            return 0
 
         fvid_str = ' '.join([str(f) for f in fvid])
-        # for f in fvid:
-        #     fvid_str += str(f) + ' '
 
         if fvid_str.startswith('1 /') or fvid_str.startswith('1 *'):
-            return False
+            return 0
 
         # TODO: Put inside loop
         if '+ + +' in fvid_str or '- - -' in fvid_str or '% %' in fvid_str:
-            return False
+            return 0
 
         # TODO: 07/05/203 Last thought: 1 1 n +. All sumatory must only have one 1, because more than one it's the
         #  same as the number 2.
@@ -63,9 +61,6 @@ class FvidGenerator:
         symbol_types = []
 
         for i in range(len(fvid)):
-
-            if fvid_str == '2 1 +':
-                a = 0
 
             fvid_strs.append(str(fvid[i]))
             symbol_types.append(self.__get_symbol_type(fvid_strs[-1]))
@@ -77,25 +72,27 @@ class FvidGenerator:
 
                 if fvid_strs[-1] == '%' and (symbol_types[-2] == 'f' or fvid_strs[-2] == ')'):
                     # Modulus of just one variable not allowed
-                    return False
+                    return i - 1
 
-                if symbol_types[-1] == ')' and (symbol_types[-2] == 'v' or
-                                                (last_open_parenthesis_pos > -1 and last_open_parenthesis_pos > i - 3)):
-                    return False
+                if symbol_types[-1] == ')':
+                    if symbol_types[-2] == 'v':
+                        return i - 1
+                    if last_open_parenthesis_pos > -1 and last_open_parenthesis_pos > i - 3:
+                        return 0  # TODO
 
                 if symbol_types[-1] == 'f' and symbol_types[-2] == '(':
-                    return False
+                    return i - 1
 
                 if i == 1 or (i > 2 and fvid_strs[-3] == '('):
                     if fvid_strs[-1] == '+':
                         # Absoluting a number already positive -> n +, (x +)
-                        return False
+                        return 0  # TODO
                     elif fvid_strs[-1] == '%':
                         # Cannot perform mod of just one number -> n %, 2 %
-                        return False
+                        return 0  # TODO
                     elif fvid_strs[-2] == '2' and fvid_strs[-1] == '/':
                         # math.isqrt(2) equals 1, which we already have -> 2 /
-                        return False
+                        return 0  # TODO
 
                 if symbol_types[-1] == 'v':
                     if len(current_variables) > 1 and fvid_strs[-1] < fvid_strs[-2]:
@@ -103,7 +100,7 @@ class FvidGenerator:
                 elif len(current_variables) > 0:
                     fun = getattr(fvid[-1], 'does_parameters_order_affects_result', None)
                     if fun and not fun() and not are_current_variables_ordered:
-                        return False
+                        return 0  # i - 2
                     current_variables.clear()
                     are_current_variables_ordered = True
 
@@ -111,81 +108,81 @@ class FvidGenerator:
 
                 if symbol_types[-3] == 'f':
                     if fvid_strs[-1] == '+' and fvid_strs[-2] == '+':
-                        # Absoluting an already absoluted number -> n + +, (y n %) + +
-                        return False
+                        # Absoluting an already absoluted number -> ...% + +, ...* + +
+                        return i - 2
                     elif fvid_strs[-1] == '-' and fvid_strs[-2] == '-':
-                        # Negating an already negated number -> n - -, (n y *) - -
-                        return False
+                        # Negating an already negated number -> .../ - -, ...+ - -
+                        return i - 2
 
                 if (i == 2 or (i > 2 and fvid_strs[-4] == '(')) and symbol_types[-3] == 'v':
                     if fvid_strs[-1] == '+':
                         if fvid_strs[-2] == '-':
                             # Absoluting a previously negated number -> n - +, 2 - +
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-2] == '*':
                             # Positive square numbers do not need to be absoluted -> 2 * +, y * +
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-2] == '/':
                             # Positive square rooted numbers do not need to be absoluted -> 2 / +, x / +
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == '1' and fvid_strs[-2] == '1':
                             # 1 + 1 equals 2, which we already have -> 1 1 +
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == '2' and fvid_strs[-2] == '2':
                             # 4 can be achieved shortly with 2 *, se we discard this case
-                            return False
+                            return 0  # i - 2
                     elif fvid_strs[-1] == '-':
                         if fvid_strs[-2] == '-':
                             # Negating a previously negated number -> 2 - -, n - -
-                            return False
+                            return 0  # i - 2
                         if fvid_strs[-3] == fvid_strs[-2]:
                             # A number minus itself always gives 0 -> n n -, x x -
-                            return False
+                            return 0  # i - 2
                         if fvid_strs[-3] == '2' and fvid_strs[-2] == '1':
                             # 2 - 1 equals 1, which we already have
-                            return False
+                            return 0  # i - 2
                         if fvid_strs[-3] == '1' and fvid_strs[-2] == '2':
                             # -1 can be achieved with 1 -, which is shorter than 1 2 -
-                            return False
+                            return 0  # i - 2
                     elif fvid_strs[-1] == '/':
                         if fvid_strs[-2] == '*':
                             # Multiply by itself to later square root itself -> n * /, x * /
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-2] == '-':
                             # Square roots of negative numbers are not allowed -> x - /, 2 - /
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-2] == '1':
                             # Division by 1 -> x 1 /, 2 1 /
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == fvid_strs[-2]:
                             # Division by itself equals 1 -> n n /, y y /
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == '1':
                             # 1 divided by any positive number always returns 0 -> 1 x /, 1 2 /
-                            return False
+                            return 0  # i - 2
                     elif fvid_strs[-1] == '%':
                         if fvid_strs[-2] == '1':
                             # Modulus by 1 always equals 0 -> n 1 %, x 1 %
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == '1' or fvid_strs[-3] == '2':
                             # 1 or 2 mod any number always returns the same number -> 1 n %, 2 x %
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == fvid_strs[-2]:
                             # Modulus of itself always equals 0 -> n n %, y y %
-                            return False
+                            return 0  # i - 2
                     elif fvid_strs[-1] == '*':
                         if fvid_strs[-3] == fvid_strs[-2]:
                             # n n *, 2 2 *, y y *,... it's the same as n *, 2 *, y *,... and these last ones are shorter
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == '1' or fvid_strs[-2] == '1':
                             # Multiplication by 1 returns the same number -> 1 n *, x 1 *
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-3] == '2' or fvid_strs[-2] == '2':
                             # Multiplication by 2 it's the same as n n +, y y +,..., so we choose these last ones better
-                            return False
+                            return 0  # i - 2
                         elif fvid_strs[-2] == '-':
                             # Square the negation of any number it's the same as squaring it directly -> n - +, 2 - *
-                            return False
+                            return 0  # i - 2
 
             if i > 2:
                 if (i == 3 or (i > 3 and fvid_strs[-5] == '(')) and symbol_types[-4] == 'v':
@@ -193,36 +190,36 @@ class FvidGenerator:
                         if fvid_strs[-1] == '+':
                             if fvid_strs[-2] == '+':
                                 # Absoluting a summary already positive -> n n + +, x x + +
-                                return False
+                                return 0  # i - 3
                             elif fvid_strs[-2] == '/':
                                 # Absoluting a division already positive -> n y / +, 2 y / +
-                                return False
+                                return 0  # i - 3
                             elif fvid_strs[-2] == '%':
                                 # Absoluting a modulus already positive -> n y % +, x y % +
-                                return False
+                                return 0  # i - 3
                             elif fvid_strs[-2] == '*':
                                 # Absoluting a multiplication already positive -> n x * +, x y * +
-                                return False
+                                return 0  # i - 3
                     elif fvid_strs[-1] == '+':
                         if symbol_types[-2] == 'v':
                             if fvid_strs[-3] == '-' and fvid_strs[-4] == fvid_strs[-2]:
                                 # Negating a number to later add itself returns 0 -> n - n +, x - x +
-                                return False
+                                return 0  # i - 3
                         elif fvid_strs[-2] == '/':
                             if fvid_strs[-3] == '/':
-                                return False
+                                return 0  # i - 3
                             elif fvid_strs[-3] == '*':
-                                return False
+                                return 0  # i - 3
                         elif fvid_strs[-2] == '*':
                             if fvid_strs[-3] == '*':
-                                return False
+                                return 0  # i - 3
                             elif fvid_strs[-3] == '/':
-                                return False
+                                return 0  # i - 3
                         elif fvid_strs[-2] == '-':
                             if fvid_strs[-3] == '/':
-                                return False
+                                return 0  # i - 3
                             elif fvid_strs[-3] == '*':
-                                return False
+                                return 0  # i - 3
 
             if symbol_types[-1] == "(":
                 last_open_parenthesis_pos = i
@@ -230,12 +227,15 @@ class FvidGenerator:
             elif symbol_types[-1] == ")":
                 currently_open_parenthesis -= 1
                 if currently_open_parenthesis < 0:
-                    return False
+                    return 0  # i
 
-        if currently_open_parenthesis != 0 or symbol_types[-1] != 'f':
-            return False
+        if symbol_types[-1] != 'f':
+            return 0  # len(symbol_types) - 1
 
-        return True
+        if currently_open_parenthesis != 0:
+            return 0  # TODO
+
+        return None
 
     @staticmethod
     def fvid_str_to_symbols_list(fvid_str: str):
@@ -259,17 +259,20 @@ class FvidGenerator:
         not_modified = False
         last_symbol_str = str(self.symbols[-1])
         first_symbol = self.symbols[0]
+        position_to_change = None
 
         while not not_modified:
             not_modified = True
-            for i in range(0, length):
+            start = position_to_change if position_to_change is not None else 0
+            for i in range(start, length):
                 str_symbol = str(fvid_copy[i])
                 if str_symbol != last_symbol_str:
                     next_symbol = self.__get_next_symbol(fvid_copy[i])
                     fvid_copy[i] = next_symbol
                     for j in range(i - 1, -1, -1):
                         fvid_copy[j] = first_symbol
-                    if self.__check_fvid(fvid_copy):
+                    position_to_change = self.__check_fvid(fvid_copy)
+                    if position_to_change is None:
                         return fvid_copy
                     not_modified = False
                     break
@@ -281,7 +284,7 @@ class FvidGenerator:
         for i in range(self.length):
             fvid.append(self.symbols[0])
 
-        if self.__check_fvid(fvid):
+        if self.__check_fvid(fvid) is None:
             return fvid
 
         return self.get_next_fvid(fvid)
@@ -301,7 +304,7 @@ class FvidGenerator:
         current_fvid = first_fvid
 
         while current_fvid is not None:
-            print(' '.join([s.symbol() for s in current_fvid]))
+            # print(' '.join([s.symbol() for s in current_fvid]))
             fvids.append(current_fvid)
             current_fvid = self.get_next_fvid(current_fvid)
 
@@ -311,5 +314,5 @@ class FvidGenerator:
 
 
 if __name__ == '__main__':
-    generator = FvidGenerator(4)
+    generator = FvidGenerator(6)
     generator.generate()
