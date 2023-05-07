@@ -322,6 +322,8 @@ class Analyze1Command(Command):
                         if lowest_simple_score is None or simple_score < lowest_simple_score or \
                                 (simple_score == lowest_simple_score and total_score <= lowest_total_score):
                             ams_to_upload[connections]["fvids"] = [fvid_str]
+                            lowest_simple_score = simple_score
+                            lowest_total_score = total_score
                     else:
                         ams[connections]["connected"] = False
                         ams_to_upload[connections]["connected"] = False
